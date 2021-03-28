@@ -5,81 +5,105 @@ using UnityEngine;
 
 public class Land : MonoBehaviour {
 
-    [SerializeField] private List<Land> pipeLandFrom;
     private ResourcesManager resourcesManager;
-    private bool denyForward;//是否拒绝传递，为true则不会向上游请求
+    private PipeManager pipeManager;
     private BuildingBase building;
-    [SerializeField] private int maxForwardNum;//最大传递数，可能还要换个地方
 
     private Player belongPlayer;
+    private Player attackPlayer;
+    [SerializeField] private float maxHealth;
+    [SerializeField] private float maxBelongVal;
+    [SerializeField] private float belongVal;
+    [SerializeField] private float health;
+
+    public EventHandler OnHealthDamage;
+    public EventHandler OnBelongDamage;
     public EventHandler OnBelongPlayerChange;
 
     public enum LandFunction {//在站点的上有哪些功能
         none,
         buildPipe,
-        buildBuilding
+        buildBuilding,
+        shoot
     }
 
     private HashSet<LandFunction> landFunctions;
 
-    private void Start() {
-        pipeLandFrom = new List<Land>();
+    private void Awake() {
         landFunctions = new HashSet<LandFunction>();
-        AddFunction(LandFunction.buildPipe);//默认就有建立连接功能
         AddFunction(LandFunction.buildBuilding);//默认就有建建筑功能
+        health = maxHealth;
+        belongVal = maxBelongVal;
+    }
 
-        denyForward = true;//
+    private void Start() {
+        pipeManager = GetComponent<PipeManager>();
         resourcesManager = GetComponent<ResourcesManager>();
-        resourcesManager.OnResourcesLack += (object sender, ResourceRequire e) => {
-            RequestForward(e, 0);//本站资源不足，转发请求
-        };
     }
 
-    public void SendResources(ResourceRequire resourceRequire, Land toLand, int forwardNum) {//传递请求(当前无法满足请求)或发送资源(当前满足请求)
-        if (forwardNum > maxForwardNum) return;//传播距离过远(避免循环)
-        if (!resourcesManager.TestUpdateResources(resourceRequire)) {
-            RequestForward(resourceRequire, forwardNum+1);
+    public void ChangeBelong(Player player) {
+        if (belongPlayer == player) return;
+        belongPlayer = player;
+        if (OnBelongPlayerChange != null)
+            OnBelongPlayerChange.Invoke(this, EventArgs.Empty);
+    }
+
+    public void Damage(float damage, Player player) {
+        if (health > 0) {
+            if (player != belongPlayer)
+                health -= damage;
+            else health += damage;//自己人就变为恢复
+            if (OnHealthDamage != null)
+                OnHealthDamage.Invoke(this, EventArgs.Empty);
+            health = Mathf.Clamp(health, 0, maxHealth);
+            attackPlayer = null;
         }
-        else {
-            resourcesManager.UpdateResources(resourceRequire);
-            StartCoroutine("SendResourcesOneByOne", new SendArgs { require = resourceRequire, toLand = toLand });
+        else if (health == 0) {
+            if (belongVal > 0 && attackPlayer!=player) {
+                belongVal -= damage;
+                if (belongVal <= 0) {
+                    belongVal = 0;
+                    attackPlayer = player;
+                }
+            }
+            else if (attackPlayer == player) {
+                belongVal += damage;
+                if (belongVal >= maxBelongVal) {
+                    belongVal = maxBelongVal;
+                    ChangeBelong(attackPlayer);
+                    attackPlayer = null;
+                }
+            }
+            if (OnBelongDamage != null)
+                OnBelongDamage.Invoke(this, EventArgs.Empty);
         }
     }
 
-    public void UpdateResources(ResourceRequire resourceRequire) {//仅在收到其他站点的资源后调用
-        resourcesManager.UpdateResources(resourceRequire);
+    public Color GetAttackerColor() {
+        if (attackPlayer == null) return belongPlayer.GetColor();
+        return attackPlayer.GetColor();
     }
 
-    private void RequestForward(ResourceRequire resourceRequire, int forwardNum) {
-        if (denyForward) return;
-        foreach (Land from in pipeLandFrom) {//如果不可以提供，向上游所有资源供给站发出请求
-            from.SendResources(resourceRequire, this, forwardNum+1);
-            Debug.DrawLine(transform.position, from.transform.position, Color.red);
-        }
+    public float GetHealthRate() {
+        if (maxHealth == 0) return 0;
+        return health / maxHealth;
     }
 
-    private class SendArgs {
-        public ResourceRequire require;
-        public Land toLand;
+    public float GetBelongRate() {
+        if (maxBelongVal == 0) return 0;
+        return belongVal / maxBelongVal;
     }
 
-    IEnumerator SendResourcesOneByOne(SendArgs args) {
-        for(int i=0; i<-args.require.updateVal; i++) {//一次发一个
-            Resource.GetInstance().SendResource(this, args.toLand, args.require.resource);
-            yield return new WaitForSeconds(0.2f);
-        }
+    public void ClearHealth() {//生命清零
+        health = 0;
     }
 
-    public void SetIfDenyForward(bool ifDeny) {
-        denyForward = ifDeny;
+    public void FillHealth() {//生命填满
+        health = maxHealth;
     }
 
-    public void AddPipeFrom(Land land) {
-        pipeLandFrom.Add(land);
-    }
-
-    public void RemovePipeFrom(Land land) {
-        pipeLandFrom.Remove(land);
+    public PipeManager GetPipeManager() {
+        return pipeManager;
     }
 
     public HashSet<LandFunction> GetLandFunctions(){
@@ -103,15 +127,12 @@ public class Land : MonoBehaviour {
         else building.Remove();
     }
 
-    public Vector3 GetEdgePosition(Vector3 mousePoint) {//获得Land的边缘位置
-        return (mousePoint - transform.position).normalized * 1.5f + transform.position;
+    public BuildingBase GetBuilding() {
+        return building;
     }
 
-    public void ChangeBelong(Player player) {
-        if (belongPlayer == player) return;
-        belongPlayer = player;
-        if (OnBelongPlayerChange != null)
-            OnBelongPlayerChange.Invoke(this, EventArgs.Empty);
+    public Vector3 GetEdgePosition(Vector3 mousePoint) {//获得Land的边缘位置
+        return (mousePoint - transform.position).normalized * 1.5f + transform.position;
     }
 
     public Player GetPlayer() {

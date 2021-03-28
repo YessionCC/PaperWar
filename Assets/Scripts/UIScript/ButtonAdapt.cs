@@ -28,6 +28,8 @@ public class ButtonAdapt : MonoBehaviour {
                 button.onClick.AddListener(BuildPipe); break;
             case Land.LandFunction.buildBuilding:
                 button.onClick.AddListener(BuildBuilding); break;
+            case Land.LandFunction.shoot:
+                button.onClick.AddListener(BulletShoot); break;
         }
     }
 
@@ -38,5 +40,10 @@ public class ButtonAdapt : MonoBehaviour {
 
     private void BuildBuilding() {
         LandPanel.GetInstance().ToShow(BuilderPanel.GetInstance() as IPannelInterface);
+    }
+
+    private void BulletShoot() {
+        ShootLocator.GetInstance().Shoot();
+        landPanel.HideAll();
     }
 }

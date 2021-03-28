@@ -14,6 +14,7 @@ public class BaseLandPannel : MonoBehaviour, IPannelInterface {
         functionSprite = new Dictionary<Land.LandFunction, Sprite>();
         functionSprite.Add(Land.LandFunction.buildPipe, Resources.Load<Sprite>("LandUISprite/connect"));
         functionSprite.Add(Land.LandFunction.buildBuilding, Resources.Load<Sprite>("LandUISprite/build"));
+        functionSprite.Add(Land.LandFunction.shoot, Resources.Load<Sprite>("LandUISprite/shoot"));
         rect = GetComponent<RectTransform>();
         buttons = transform.GetComponentsInChildren<ButtonAdapt>();
         buttonImg = new Image[buttons.Length];

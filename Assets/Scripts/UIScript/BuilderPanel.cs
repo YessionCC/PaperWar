@@ -16,7 +16,7 @@ public class BuilderPanel : MonoBehaviour, IPannelInterface {
         buildingTypeSprite = new Dictionary<BuildingBuilder.BuildingType, Sprite>();
         buildingTypeSprite.Add(BuildingBuilder.BuildingType.apartment, Resources.Load<Sprite>("BuildUISprite/apartment"));
         buildingTypeSprite.Add(BuildingBuilder.BuildingType.powerPlant, Resources.Load<Sprite>("BuildUISprite/powerPlant"));
-        buildingTypeSprite.Add(BuildingBuilder.BuildingType.barrack, Resources.Load<Sprite>("BuildUISprite/barrack"));
+        buildingTypeSprite.Add(BuildingBuilder.BuildingType.shooter, Resources.Load<Sprite>("BuildUISprite/shooter"));
         buildingTypeSprite.Add(BuildingBuilder.BuildingType.back, Resources.Load<Sprite>("LandUISprite/back"));
 
         buttons = transform.GetComponentsInChildren<Button>(true);

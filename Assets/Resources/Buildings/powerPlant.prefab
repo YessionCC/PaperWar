@@ -67,8 +67,8 @@ MonoBehaviour:
   resourcesToConsume: []
   resourcesToGen:
   - resource: 0
-    updateVal: 1
-  updateFreq: 1
+    updateVal: 5
+  updateFreq: 0.5
 --- !u!212 &212348652765370698
 SpriteRenderer:
   m_ObjectHideFlags: 1

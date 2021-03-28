@@ -12,7 +12,7 @@ public class MouseStateRecorder : MonoBehaviour {
     public enum MouseState {
         normal,
         buildPipe,
-
+        emitBullet
     }
 
     private void Awake() {

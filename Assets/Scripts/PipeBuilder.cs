@@ -6,6 +6,8 @@ public class PipeBuilder : MonoBehaviour {
 
     private static PipeBuilder Instance;
     [SerializeField] private Pipe pipePrefab;
+    [SerializeField] private float maxPipeLen;
+    [SerializeField] private float pipeCostPerLen;
 
     private void Awake() {
         Instance = this;
@@ -25,14 +27,21 @@ public class PipeBuilder : MonoBehaviour {
 
     IEnumerator SelectToLand(Pipe pipe) {
         while (true) {
-            Vector3 point = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            pipe.Stretch((Vector2)point);
+            Vector2 point = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            pipe.Stretch(point, pipe.GetLength(point)<maxPipeLen);
             if (Input.GetMouseButtonDown(0)) {
-                RaycastHit2D hit = Physics2D.Raycast(new Vector2(point.x, point.y), Vector2.zero);
+                RaycastHit2D hit = Physics2D.Raycast(point, Vector2.zero);
                 if (hit.collider) {
                     Land land = hit.collider.GetComponent<Land>();
-                    if (land != null && 
-                        !land.Equals(LandPanel.GetInstance().GetCurPointLand())) {//不建立自己到自己的pipe
+                    float dis = 0;
+                    if (land != null &&
+                        !land.Equals(LandPanel.GetInstance().GetCurPointLand()) &&  //不建立自己到自己的pipe
+                        pipe.GetPlayer().Equals(land.GetPlayer()) &&    //不建立自己到别人的pipe
+                        (dis = pipe.GetLength(point)) < maxPipeLen) {  //不能太长
+                        PlayerDataRequire dataRequire = new PlayerDataRequire(PlayerData.PlayerDataEnum.capital, -(int)(pipeCostPerLen * dis));
+                        bool ret = pipe.GetPlayer().GetData().UpdateData(dataRequire, false);
+                        if (!ret) break; //资金不够
+                        pipe.GetPlayer().GetData().UpdateData(dataRequire, true);
                         pipe.SetToLand(land);
                         break;
                     }

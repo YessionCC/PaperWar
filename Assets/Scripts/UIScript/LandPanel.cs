@@ -15,10 +15,13 @@ public class LandPanel : MonoBehaviour {
 
     private IPannelInterface[] allPannels;
     private Stack<IPannelInterface> pannelStack;
+
+    private bool isAnyPannelShow;
     
 
     private void Awake() {
         Instance = this;
+        isAnyPannelShow = false;
         pannelStack = new Stack<IPannelInterface>();
         allPannels = transform.GetComponentsInChildren<IPannelInterface>();
     }
@@ -34,6 +37,7 @@ public class LandPanel : MonoBehaviour {
             pannelStack.Peek().Hide();
         pannel.Show();
         pannelStack.Push(pannel);
+        isAnyPannelShow = true;
     }
 
     public void ToBack() {
@@ -48,6 +52,7 @@ public class LandPanel : MonoBehaviour {
         if (pannelStack.Count == 0) return;
         pannelStack.Peek().Hide();
         pannelStack.Clear();
+        isAnyPannelShow = false;
     }
 
     public static LandPanel GetInstance() {
@@ -61,8 +66,9 @@ public class LandPanel : MonoBehaviour {
             Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             RaycastHit2D hit = Physics2D.Raycast(new Vector2(pos.x, pos.y), Vector2.zero);
             if (hit.collider) {
-                curPointLand = hit.collider.GetComponent<Land>();
-                if (curPointLand == null) return;
+                Land cur = hit.collider.GetComponent<Land>();
+                if (cur == null || cur.GetPlayer()!=GameManager.GetInstance().GetCurPlayer()) return;
+                curPointLand = cur;
                 if (OnPointLandChange != null) OnPointLandChange.Invoke(this, EventArgs.Empty);
                 transform.position = curPointLand.transform.position;
                 HideAll();
@@ -79,5 +85,9 @@ public class LandPanel : MonoBehaviour {
 
     public Land GetCurPointLand() {
         return curPointLand;
+    }
+
+    public bool IfAnyPannelShow() {
+        return isAnyPannelShow;
     }
 }

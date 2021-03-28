@@ -69,8 +69,8 @@ MonoBehaviour:
     updateVal: -1
   resourcesToGen:
   - resource: 1
-    updateVal: 1
-  updateFreq: 1
+    updateVal: 5
+  updateFreq: 0.2
 --- !u!212 &212348652765370698
 SpriteRenderer:
   m_ObjectHideFlags: 1

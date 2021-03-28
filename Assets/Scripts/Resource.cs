@@ -5,6 +5,8 @@ using UnityEngine;
 public class Resource : MonoBehaviour {
 
     [SerializeField] private Dictionary<ResourcesEnum, GameObject> resourceObj;
+    [SerializeField] private Emission bulletPrefab;
+    public ExpandCircle expandCircle;
     private static Resource Instance;
 
     private void Awake() {
@@ -22,18 +24,28 @@ public class Resource : MonoBehaviour {
         return Instance;
     }
 
-    public void SendResource(Land from, Land to, ResourcesEnum resourcesEnum) {//仅发送一个资源
-        Vector3 initPos = from.GetEdgePosition(to.transform.position);
-        Vector3 toPos = to.GetEdgePosition(from.transform.position);
+    public void SendResource(Vector3 initPos, Vector3 toPos, Player player, ResourcesManager toMan, ResourcesEnum resourcesEnum) {//仅发送一个资源
         GameObject obj = Instantiate(resourceObj[resourcesEnum], initPos, Quaternion.identity);
-        ResourceEntity entity = obj.GetComponent<ResourceEntity>();
+        Emission entity = obj.GetComponent<Emission>();
         entity.SetToWhere(toPos);
+        entity.SetPlayer(player);
         entity.SetSpeed(0.1f);//
         entity.OnArrive += (object sender, System.EventArgs e) => {
             ResourceRequire _require = new ResourceRequire();
             _require.resource = resourcesEnum;
             _require.updateVal = 1;
-            if (to != null) to.UpdateResources(_require);
+            toMan.UpdateResources(_require);
+        };
+    }
+
+    public void EmitBullet(Vector3 initPos, Land toLand, Player player) {
+        Emission entity = Instantiate(bulletPrefab, initPos, Quaternion.identity);
+        entity.SetToWhere(toLand.transform.position);
+        entity.SetPlayer(player);
+        entity.SetSpeed(0.1f);//
+        entity.OnArrive += (object sender, System.EventArgs e) => {
+            if (toLand == null || toLand.GetPlayer().Equals(player)) return;
+            toLand.Damage(10, player);
         };
     }
 }
